@@ -1,6 +1,9 @@
 *.json
-*.py
 *.log
 *.cpython*
 *.yaml
 experiments/*
+*.png
+ffhq64/*
+*.zip
+*.txt
