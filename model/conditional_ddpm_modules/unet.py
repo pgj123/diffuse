@@ -234,11 +234,10 @@ class UNet(nn.Module):
             feats.append(x)
 
         for layer in self.mid:
-            #TODO
-            x = layer(x, t)
+            x = layer(x, t) #gwanjong park
 
         for layer in self.ups:
-            #TODO
+            #gwanjong park
             if isinstance(layer, Resnet):
                 x = torch.cat((x, feats.pop()), dim=1)
                 x = layer(x,t)

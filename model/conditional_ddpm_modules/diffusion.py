@@ -121,7 +121,7 @@ class GaussianDiffusion(nn.Module):
         self.register_buffer('sqrt_frac_gamma_min1',to_torch(np.sqrt(1. / gamma - 1)))
 
         # calculations for posterior q(x_{t-1} | x_t, x_0)
-        posterior_var = betas * self.sqrt_frac_gamma_min1.cpu().numpy() ## gwanjong park
+        posterior_var = betas * (1. - gamma_tmin1) / (1. - gamma) ## gwanjong park
 
         self.register_buffer('posterior_var',to_torch(posterior_var))
         self.register_buffer('log_posterior_var', to_torch(np.log(np.maximum(posterior_var, 1e-20))))
@@ -131,10 +131,10 @@ class GaussianDiffusion(nn.Module):
 
     def predict_start_from_noise(self, x_t, t, noise):
         ''' Hint: variable at "t" (use like "some_variable[t]") '''
-        return (x_t - noise * self.sqrt_frqc_gamma_min1[t]) / self.sqrt_gamma_tmin1[t] #TODO
+        return (x_t - noise * self.sqrt_frac_gamma_min1[t]) / self.sqrt_gamma_tmin1[t] #gwanjong park
 
     def q_posterior(self, x_first, x_t, t):
-        posterior_mean = self.posterior_mean1[t] * x_first + self.posterior_mean2[t] * x_t #TODO
+        posterior_mean = self.posterior_mean1[t] * x_first + self.posterior_mean2[t] * x_t #gwanjong park
         log_posterior_var = self.log_posterior_var[t]
         return posterior_mean, log_posterior_var
 
@@ -145,9 +145,11 @@ class GaussianDiffusion(nn.Module):
             [self.sqrt_gamma_tmin1[t+1]]).repeat(batch_size, 1).to(x.device)
 
         if noisy_img is not None:
-            #TODO
-            cond_input = self.get_conditional_input(noisy_img)
-            x_recon = self.diffusion_net(x, noisy_level, cond_input)
+            #gwanjong park
+            cond_input = torch.cat((x, noisy_img), dim=1)
+            x_recon = self.predict_start_from_noise(
+                x, t=t, noise=self.diffusion_net(cond_input, noise_level))
+            #x_recon = self.diffusion_net(cond_input, noise_level)
         else:
             x_recon = self.predict_start_from_noise(
                 x, t=t, noise=self.diffusion_net(x, noise_level))
@@ -221,8 +223,8 @@ class GaussianDiffusion(nn.Module):
         if not self.cond:
             x_recon = self.diffusion_net(x_noisy, continuous_sqrt_gamma)
         else: 
-            #TODO
-            cond_input = x_noisy
+            #gwanjong park
+            cond_input = torch.cat((x_noisy, noisy_img), dim=1)
             x_recon = self.diffusion_net(cond_input, continuous_sqrt_gamma)
         
         loss = self.loss_func(noise, x_recon)
