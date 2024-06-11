@@ -234,7 +234,8 @@ class UNet(nn.Module):
             feats.append(x)
 
         for layer in self.mid:
-            x = layer(x, t) #gwanjong park
+            #gwanjong park
+            x = layer(x, t) 
 
         for layer in self.ups:
             #gwanjong park

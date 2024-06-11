@@ -121,7 +121,8 @@ class GaussianDiffusion(nn.Module):
         self.register_buffer('sqrt_frac_gamma_min1',to_torch(np.sqrt(1. / gamma - 1)))
 
         # calculations for posterior q(x_{t-1} | x_t, x_0)
-        posterior_var = betas * (1. - gamma_tmin1) / (1. - gamma) ## gwanjong park
+        # gwanjong park
+        posterior_var = betas * (1. - gamma_tmin1) / (1. - gamma)
 
         self.register_buffer('posterior_var',to_torch(posterior_var))
         self.register_buffer('log_posterior_var', to_torch(np.log(np.maximum(posterior_var, 1e-20))))
@@ -131,10 +132,12 @@ class GaussianDiffusion(nn.Module):
 
     def predict_start_from_noise(self, x_t, t, noise):
         ''' Hint: variable at "t" (use like "some_variable[t]") '''
-        return (x_t - noise * self.sqrt_frac_gamma_min1[t]) / self.sqrt_gamma_tmin1[t] #gwanjong park
+        #gwanjong park
+        return (x_t - noise * self.sqrt_frac_gamma_min1[t]) / self.sqrt_gamma_tmin1[t]
 
     def q_posterior(self, x_first, x_t, t):
-        posterior_mean = self.posterior_mean1[t] * x_first + self.posterior_mean2[t] * x_t #gwanjong park
+        #gwanjong park
+        posterior_mean = self.posterior_mean1[t] * x_first + self.posterior_mean2[t] * x_t
         log_posterior_var = self.log_posterior_var[t]
         return posterior_mean, log_posterior_var
 
@@ -149,7 +152,6 @@ class GaussianDiffusion(nn.Module):
             cond_input = torch.cat((x, noisy_img), dim=1)
             x_recon = self.predict_start_from_noise(
                 x, t=t, noise=self.diffusion_net(cond_input, noise_level))
-            #x_recon = self.diffusion_net(cond_input, noise_level)
         else:
             x_recon = self.predict_start_from_noise(
                 x, t=t, noise=self.diffusion_net(x, noise_level))
